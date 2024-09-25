@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<monster name="Hittler" nameDescription="a Hittler" race="fire" experience="12000" speed="800">
+  <health now="12000" max="12000"/>
+  <look type="145" head="114" body="76" legs="76" feet="76" addons="3" corpse="3128"/>
+  <targetchange interval="238" chance="10"/>
+  <strategy attack="50" defense="51"/>
+  <flags>
+    <flag summonable="0"/>
+    <flag attackable="1"/>
+    <flag hostile="1"/>
+    <flag illusionable="0"/>
+    <flag convinceable="0"/>
+    <flag pushable="0"/>
+    <flag canpushitems="1"/>
+    <flag staticattack="40"/>
+    <flag lightlevel="0"/>
+    <flag lightcolor="0"/>
+    <flag targetdistance="1"/>
+    <flag runonhealth="0"/>
+    <flag skull="red"/>
+  </flags>
+  
+<attacks>
+	<attack name="melee" interval="1000" min="-500" max="-600"/>
+	
+	<attack name="explosion" interval="4500" chance="80" min="-200" max="-400"/>
+	<attack name="Explosive Arrow" interval="3000" chance="70" min="-200" max="-300"/>
+</attacks>
+
+  <defenses armor="40" defense="45">
+    <defense name="Ultimate Healing" interval="4000" chance="5" min="50" max="200"/>
+</defenses>
+
+ <immunities>
+    <immunity physical="0"/>
+    <immunity energy="1"/>
+    <immunity fire="1"/>
+    <immunity poison="1"/>
+    <immunity lifedrain="0"/>
+    <immunity paralyze="1"/>
+    <immunity outfit="1"/>
+    <immunity drunk="1"/>
+    <immunity invisible="1"/>
+  </immunities>
+ 
+  <voices interval="1000" chance="10">
+	<voice sentence="Hail Me!"/>
+	<voice sentence="Lets Kill all Niggas!!!"/>
+	<voice sentence="Im The Perfect Race"/>
+</voices>
+  
+<loot>
+	<item id="2160" countmax="1" chance1="100000" chancemax="0"/> -- crystal coin
+	<item id="2796" countmax="10" chance1="100000" chancemax="0"/> -- green mushroom
+ 	<item id="1987" chance="33333"> -- bag
+ 	<inside>
+	<item id="2214" chance1="100000" chancemax="0"/> -- ring of healing
+	<item id="2173" chance="3500"/> -- amulet of loss
+ 	<item id="2472" chance="2000"/> -- magic plate armor :: Arm 17
+ 	<item id="3962" chance="2000"/> -- beastslayer axe :: Def 12 :: Atk 35
+ 	</inside>
+ 	</item>
+</loot>
+
+  <summons maxSummons="3">
+    <summon name="neonazi" interval="2000" chance="1333"/>
+  </summons>
+
+</monster>
