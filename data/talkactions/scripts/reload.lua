@@ -4,6 +4,9 @@ local reloadTypes = {
 	["action"] = RELOAD_TYPE_ACTIONS,
 	["actions"] = RELOAD_TYPE_ACTIONS,
 
+	["aura"] = RELOAD_TYPE_AURAS,
+	["auras"] = RELOAD_TYPE_AURAS,
+
 	["chat"] = RELOAD_TYPE_CHAT,
 	["channel"] = RELOAD_TYPE_CHAT,
 	["chatchannels"] = RELOAD_TYPE_CHAT,
@@ -42,6 +45,9 @@ local reloadTypes = {
 	["raid"] = RELOAD_TYPE_RAIDS,
 	["raids"] = RELOAD_TYPE_RAIDS,
 
+	["shader"] = RELOAD_TYPE_SHADERS,
+	["shaders"] = RELOAD_TYPE_SHADERS,
+
 	["spell"] = RELOAD_TYPE_SPELLS,
 	["spells"] =  RELOAD_TYPE_SPELLS,
 
@@ -51,6 +57,9 @@ local reloadTypes = {
 
 	["weapon"] = RELOAD_TYPE_WEAPONS,
 	["weapons"] = RELOAD_TYPE_WEAPONS,
+
+	["wing"] = RELOAD_TYPE_WINGS,
+	["wings"] = RELOAD_TYPE_WINGS,
 
 	["scripts"] = RELOAD_TYPE_SCRIPTS,
 	["libs"] = RELOAD_TYPE_GLOBAL
@@ -71,6 +80,11 @@ function onSay(player, words, param)
 	if not reloadType then
 		player:sendTextMessage(MESSAGE_STATUS_CONSOLE_BLUE, "Reload type not found.")
 		return false
+	end
+
+	-- need to clear EventCallback.data or we end up having duplicated events on /reload scripts
+	if table.contains({RELOAD_TYPE_SCRIPTS, RELOAD_TYPE_ALL}, reloadType) then
+		EventCallback:clear()
 	end
 
 	Game.reload(reloadType)

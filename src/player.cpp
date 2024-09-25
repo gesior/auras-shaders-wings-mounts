@@ -642,6 +642,11 @@ void Player::addStorageValue(const uint32_t key, const int32_t value, const bool
 				value & 0xFF
 			);
 			return;
+		} else if (IS_IN_KEYRANGE(key, MOUNTS_RANGE) ||
+			IS_IN_KEYRANGE(key, AURAS_RANGE) ||
+			IS_IN_KEYRANGE(key, SHADERS_RANGE) ||
+			IS_IN_KEYRANGE(key, WINGS_RANGE)) {
+			// do nothing
 		} else {
 			std::cout << "Warning: unknown reserved key: " << key << " player: " << getName() << std::endl;
 			return;
@@ -1105,6 +1110,17 @@ void Player::onChangeZone(ZoneType_t zone)
 		if (attackedCreature && !hasFlag(PlayerFlag_IgnoreProtectionZone)) {
 			setAttackedCreature(nullptr);
 			onAttackedCreatureDisappear(false);
+		}
+
+		if (!group->access && isMounted()) {
+			dismount();
+			g_game.internalCreatureChangeOutfit(this, defaultOutfit);
+			wasMounted = true;
+		}
+	} else {
+		if (wasMounted) {
+			toggleMount(true);
+			wasMounted = false;
 		}
 	}
 
@@ -3267,6 +3283,11 @@ void Player::updateItemsLight(bool internal /*=false*/)
 void Player::onAddCondition(ConditionType_t type)
 {
 	Creature::onAddCondition(type);
+
+	if (type == CONDITION_OUTFIT && isMounted()) {
+		dismount();
+	}
+
 	sendIcons();
 }
 
@@ -4052,7 +4073,7 @@ GuildEmblems_t Player::getGuildEmblem(const Player* player) const
 	return GUILDEMBLEM_NEUTRAL;
 }
 
-/*
+
 uint8_t Player::getCurrentMount() const
 {
 	int32_t value;
@@ -4212,7 +4233,7 @@ void Player::dismount()
 
 	defaultOutfit.lookMount = 0;
 }
-
+/*
 bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries)
 {
 	if (tries == 0 || skill == SKILL_LEVEL) {
@@ -4517,4 +4538,207 @@ void Player::updateRegeneration()
 		condition->setParam(CONDITION_PARAM_MANAGAIN, vocation->getManaGainAmount());
 		condition->setParam(CONDITION_PARAM_MANATICKS, vocation->getManaGainTicks() * 1000);
 	}
+}
+
+bool Player::addAura(uint8_t auraId)
+{
+	if (!g_game.auras.getAuraByID(auraId)) {
+		return false;
+	}
+
+	const uint8_t tmpAuraId = auraId - 1;
+	const uint32_t key = PSTRG_AURAS_RANGE_START + (tmpAuraId / 31);
+
+	int32_t value;
+	if (getStorageValue(key, value)) {
+		value |= (1 << (tmpAuraId % 31));
+	} else {
+		value = (1 << (tmpAuraId % 31));
+	}
+
+	addStorageValue(key, value);
+	return true;
+}
+
+bool Player::removeAura(uint8_t auraId)
+{
+	Aura* aura = g_game.auras.getAuraByID(auraId);
+	if (!aura) {
+		return false;
+	}
+
+	const uint8_t tmpAuraId = auraId - 1;
+	const uint32_t key = PSTRG_AURAS_RANGE_START + (tmpAuraId / 31);
+
+	int32_t value;
+	if (!getStorageValue(key, value)) {
+		return true;
+	}
+
+	value &= ~(1 << (tmpAuraId % 31));
+	addStorageValue(key, value);
+
+	if (defaultOutfit.lookAura == aura->clientId) {
+		defaultOutfit.lookAura = 0;
+		if (!hasCondition(CONDITION_OUTFIT)) {
+			g_game.internalCreatureChangeOutfit(this, defaultOutfit);
+		}
+	}
+
+	return true;
+}
+
+bool Player::hasAura(const Aura* aura) const
+{
+	if (isAccessPlayer()) {
+		return true;
+	}
+
+	if (aura->premium && !isPremium()) {
+		return false;
+	}
+
+	const uint8_t tmpAuraId = aura->id - 1;
+
+	int32_t value;
+	if (!getStorageValue(PSTRG_AURAS_RANGE_START + (tmpAuraId / 31), value)) {
+		return false;
+	}
+
+	return ((1 << (tmpAuraId % 31)) & value) != 0;
+}
+
+bool Player::addShader(uint8_t shaderId)
+{
+	if (!g_game.shaders.getShaderByID(shaderId)) {
+		return false;
+	}
+
+	const uint8_t tmpShaderId = shaderId - 1;
+	const uint32_t key = PSTRG_SHADERS_RANGE_START + (tmpShaderId / 31);
+
+	int32_t value;
+	if (getStorageValue(key, value)) {
+		value |= (1 << (tmpShaderId % 31));
+	} else {
+		value = (1 << (tmpShaderId % 31));
+	}
+
+	addStorageValue(key, value);
+	return true;
+}
+
+bool Player::removeShader(uint8_t shaderId)
+{
+	if (!g_game.shaders.getShaderByID(shaderId)) {
+		return false;
+	}
+
+	const uint8_t tmpShaderId = shaderId - 1;
+	const uint32_t key = PSTRG_SHADERS_RANGE_START + (tmpShaderId / 31);
+
+	int32_t value;
+	if (!getStorageValue(key, value)) {
+		return true;
+	}
+
+	value &= ~(1 << (tmpShaderId % 31));
+	addStorageValue(key, value);
+
+	if (defaultOutfit.lookShader == shaderId) {
+		defaultOutfit.lookShader = 0;
+		if (!hasCondition(CONDITION_OUTFIT)) {
+			g_game.internalCreatureChangeOutfit(this, defaultOutfit);
+		}
+	}
+
+	return true;
+}
+
+bool Player::hasShader(const Shader* shader) const
+{
+	if (isAccessPlayer()) {
+		return true;
+	}
+
+	if (shader->premium && !isPremium()) {
+		return false;
+	}
+
+	const uint8_t tmpShaderId = shader->id - 1;
+
+	int32_t value;
+	if (!getStorageValue(PSTRG_SHADERS_RANGE_START + (tmpShaderId / 31), value)) {
+		return false;
+	}
+
+	return ((1 << (tmpShaderId % 31)) & value) != 0;
+}
+
+bool Player::addWing(uint8_t wingId)
+{
+	if (!g_game.wings.getWingByID(wingId)) {
+		return false;
+	}
+
+	const uint8_t tmpWingId = wingId - 1;
+	const uint32_t key = PSTRG_WINGS_RANGE_START + (tmpWingId / 31);
+
+	int32_t value;
+	if (getStorageValue(key, value)) {
+		value |= (1 << (tmpWingId % 31));
+	} else {
+		value = (1 << (tmpWingId % 31));
+	}
+
+	addStorageValue(key, value);
+	return true;
+}
+
+bool Player::removeWing(uint8_t wingId)
+{
+	Wing* wing = g_game.wings.getWingByID(wingId);
+	if (!wing) {
+		return false;
+	}
+
+	const uint8_t tmpWingId = wingId - 1;
+	const uint32_t key = PSTRG_WINGS_RANGE_START + (tmpWingId / 31);
+
+	int32_t value;
+	if (!getStorageValue(key, value)) {
+		return true;
+	}
+
+	value &= ~(1 << (tmpWingId % 31));
+	addStorageValue(key, value);
+
+	if (defaultOutfit.lookWings == wing->clientId) {
+		defaultOutfit.lookWings = 0;
+		if (!hasCondition(CONDITION_OUTFIT)) {
+			g_game.internalCreatureChangeOutfit(this, defaultOutfit);
+		}
+	}
+
+	return true;
+}
+
+bool Player::hasWing(const Wing* wing) const
+{
+	if (isAccessPlayer()) {
+		return true;
+	}
+
+	if (wing->premium && !isPremium()) {
+		return false;
+	}
+
+	const uint8_t tmpWingId = wing->id - 1;
+
+	int32_t value;
+	if (!getStorageValue(PSTRG_WINGS_RANGE_START + (tmpWingId / 31), value)) {
+		return false;
+	}
+
+	return ((1 << (tmpWingId % 31)) & value) != 0;
 }

@@ -584,6 +584,10 @@ class LuaScriptInterface
 		static int luaGameSetAccountStorageValue(lua_State* L);
 		static int luaGameSaveAccountStorageValues(lua_State* L);
 
+		static int luaGameGetAura(lua_State* L);
+		static int luaGameGetShader(lua_State* L);
+		static int luaGameGetWing(lua_State* L);
+
 		// Variant
 		static int luaVariantCreate(lua_State* L);
 
@@ -948,6 +952,20 @@ class LuaScriptInterface
 		static int luaPlayerHasOutfit(lua_State* L);
 		static int luaPlayerCanWearOutfit(lua_State* L);
 		static int luaPlayerSendOutfitWindow(lua_State* L);
+
+		static int luaPlayerAddMount(lua_State* L);
+		static int luaPlayerRemoveMount(lua_State* L);
+		static int luaPlayerHasMount(lua_State* L);
+
+		static int luaPlayerAddAura(lua_State* L);
+		static int luaPlayerRemoveAura(lua_State* L);
+		static int luaPlayerHasAura(lua_State* L);
+		static int luaPlayerAddShader(lua_State* L);
+		static int luaPlayerRemoveShader(lua_State* L);
+		static int luaPlayerHasShader(lua_State* L);
+		static int luaPlayerAddWing(lua_State* L);
+		static int luaPlayerRemoveWing(lua_State* L);
+		static int luaPlayerHasWing(lua_State* L);
 
 		static int luaPlayerGetPremiumEndsAt(lua_State* L);
 		static int luaPlayerSetPremiumEndsAt(lua_State* L);

@@ -130,6 +130,8 @@ class ProtocolGame final : public Protocol
 		void parsePassPartyLeadership(NetworkMessage& msg);
 		void parseEnableSharedPartyExperience(NetworkMessage& msg);
 
+		void parseToggleMount(NetworkMessage& msg);
+
 		//trade methods
 		void parseRequestTrade(NetworkMessage& msg);
 		void parseLookInTrade(NetworkMessage& msg);

@@ -32,6 +32,7 @@
 #include "npc.h"
 #include "wildcardtree.h"
 #include "quests.h"
+#include "shaders.h"
 
 class ServiceManager;
 class Creature;
@@ -403,6 +404,7 @@ class Game
 		void playerPassPartyLeadership(uint32_t playerId, uint32_t newLeaderId);
 		void playerLeaveParty(uint32_t playerId);
 		void playerEnableSharedPartyExperience(uint32_t playerId, bool sharedExpActive);
+		void playerToggleOutfitExtension(uint32_t playerId, int mount, int wings, int aura, int shader);
 
 		void parsePlayerExtendedOpcode(uint32_t playerId, uint8_t opcode, const std::string& buffer);
 
@@ -495,10 +497,14 @@ class Game
 
 		bool reload(ReloadTypes_t reloadType);
 
+		Auras auras;
 		Groups groups;
 		Map map;
+		Mounts mounts;
 		Raids raids;
+		Shaders shaders;
 		Quests quests;
+		Wings wings;
 
 		std::forward_list<Item*> toDecayItems;
 

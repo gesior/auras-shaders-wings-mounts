@@ -109,6 +109,11 @@ void Game::setGameState(GameState_t newState)
 
 			quests.loadFromXml();
 
+			mounts.loadFromXml();
+			auras.loadFromXml();
+			shaders.loadFromXml();
+			wings.loadFromXml();
+
 			loadMotdNum();
 			loadPlayersRecord();
 			loadAccountStorageValues();
@@ -3185,6 +3190,17 @@ void Game::playerRequestOutfit(uint32_t playerId)
 	player->sendOutfitWindow();
 }
 
+void Game::playerToggleOutfitExtension(uint32_t playerId, int mount, int wings, int aura, int shader)
+{
+	Player* player = getPlayerByID(playerId);
+	if (!player) {
+		return;
+	}
+
+	if(mount != -1)
+		player->toggleMount(mount == 1);
+}
+
 void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit)
 {
 	if (!g_config.getBoolean(ConfigManager::ALLOW_CHANGEOUTFIT)) {
@@ -3194,6 +3210,72 @@ void Game::playerChangeOutfit(uint32_t playerId, Outfit_t outfit)
 	Player* player = getPlayerByID(playerId);
 	if (!player) {
 		return;
+	}
+
+	const Outfit* playerOutfit = Outfits::getInstance().getOutfitByLookType(player->getSex(), outfit.lookType);
+	if (!playerOutfit) {
+		outfit.lookMount = 0;
+		outfit.lookAura = 0;
+		outfit.lookShader = 0;
+		outfit.lookWings = 0;
+	}
+
+	if (outfit.lookMount != 0) {
+		Mount* mount = mounts.getMountByClientID(outfit.lookMount);
+		if (!mount) {
+			return;
+		}
+
+		if (!player->hasMount(mount)) {
+			return;
+		}
+
+		if (player->isMounted()) {
+			Mount* prevMount = mounts.getMountByID(player->getCurrentMount());
+			if (prevMount) {
+				changeSpeed(player, mount->speed - prevMount->speed);
+			}
+
+			player->setCurrentMount(mount->id);
+		} else {
+			player->setCurrentMount(mount->id);
+			outfit.lookMount = 0;
+		}
+	} else if (player->isMounted()) {
+		player->dismount();
+	}
+
+	if (outfit.lookAura) {
+		Aura* aura = auras.getAuraByClientID(outfit.lookAura);
+		if (!aura) {
+			return;
+		}
+
+		if (!player->hasAura(aura)) {
+			return;
+		}
+	}
+
+	if (outfit.lookShader) {
+		Shader* shader = shaders.getShaderByID(outfit.lookShader);
+		if (!shader) {
+			return;
+		}
+
+		if (!player->hasShader(shader)) {
+			return;
+		}
+	}
+
+	if (outfit.lookWings) {
+		Wing* wing = wings.getWingByClientID(outfit.lookWings);
+		if (!wing) {
+			return;
+		}
+
+		if (!player->hasWing(wing)) {
+			return;
+		}
 	}
 
 	if (player->canWear(outfit.lookType, outfit.lookAddons)) {
@@ -4976,6 +5058,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 {
 	switch (reloadType) {
 		case RELOAD_TYPE_ACTIONS: return g_actions->reload();
+		case RELOAD_TYPE_AURAS: return auras.reload();
 		case RELOAD_TYPE_CHAT: return g_chat->load();
 		case RELOAD_TYPE_CONFIG: return g_config.reload();
 		case RELOAD_TYPE_CREATURESCRIPTS: {
@@ -4995,6 +5078,7 @@ bool Game::reload(ReloadTypes_t reloadType)
 
 		case RELOAD_TYPE_QUESTS: return quests.reload();
 		case RELOAD_TYPE_RAIDS: return raids.reload() && raids.startup();
+		case RELOAD_TYPE_SHADERS: return shaders.reload();
 
 		case RELOAD_TYPE_SPELLS: {
 			if (!g_spells->reload()) {
@@ -5015,6 +5099,8 @@ bool Game::reload(ReloadTypes_t reloadType)
 			return results;
 		}
 
+		case RELOAD_TYPE_WINGS: return wings.reload();
+
 		case RELOAD_TYPE_SCRIPTS: {
 			// commented out stuff is TODO, once we approach further in revscriptsys
 			g_actions->clear(true);
@@ -5028,6 +5114,10 @@ bool Game::reload(ReloadTypes_t reloadType)
 			g_scripts->loadScripts("scripts", false, true);
 			g_creatureEvents->removeInvalidEvents();
 			/*
+			mounts.reload();
+			auras.reload();
+			shaders.reload();
+			wings.reload();
 			Npcs::reload();
 			raids.reload() && raids.startup();
 			Item::items.reload();
@@ -5048,6 +5138,10 @@ bool Game::reload(ReloadTypes_t reloadType)
 				std::terminate();
 			}
 
+			mounts.reload();
+			auras.reload();
+			shaders.reload();
+			wings.reload();
 			g_actions->reload();
 			g_config.reload();
 			g_creatureEvents->reload();

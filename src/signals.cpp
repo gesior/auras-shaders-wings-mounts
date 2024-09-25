@@ -36,6 +36,10 @@
 #include "events.h"
 #include "scheduler.h"
 #include "databasetasks.h"
+#include "mounts.h"
+#include "auras.h"
+#include "shaders.h"
+#include "wings.h"
 
 extern Scheduler g_scheduler;
 extern DatabaseTasks g_databaseTasks;
@@ -120,6 +124,18 @@ void sighupHandler()
 
 	g_game.quests.reload();
 	std::cout << "Reloaded quests." << std::endl;
+
+	g_game.mounts.reload();
+	std::cout << "Reloaded mounts." << std::endl;
+
+	g_game.auras.reload();
+	std::cout << "Reloaded auras." << std::endl;
+
+	g_game.shaders.reload();
+	std::cout << "Reloaded shaders." << std::endl;
+
+	g_game.wings.reload();
+	std::cout << "Reloaded wings." << std::endl;
 
 	g_globalEvents->reload();
 	std::cout << "Reloaded globalevents." << std::endl;

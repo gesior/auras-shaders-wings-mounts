@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <talkactions>
 	<!-- commands -->
+	<talkaction words="/addaura" separator=" " script="add_aura.lua" />
+	<talkaction words="/removeaura" separator=" " script="remove_aura.lua" />
+	<talkaction words="/addshader" separator=" " script="add_shader.lua" />
+	<talkaction words="/removeshader" separator=" " script="remove_shader.lua" />
+	<talkaction words="/addwing" separator=" " script="add_wing.lua" />
+	<talkaction words="/removewing" separator=" " script="remove_wing.lua" />
 	<talkaction words="/attr" separator=" " script="attributes.lua" />
 	<talkaction words="/ban" separator=" " script="ban.lua" />
 	<talkaction words="/ipban" separator=" " script="ipban.lua" />

@@ -773,7 +773,12 @@ Position LuaScriptInterface::getPosition(lua_State* L, int32_t arg)
 Outfit_t LuaScriptInterface::getOutfit(lua_State* L, int32_t arg)
 {
 	Outfit_t outfit;
+	outfit.lookMount = getField<uint16_t>(L, arg, "lookMount");
 	outfit.lookAddons = getField<uint8_t>(L, arg, "lookAddons");
+
+	outfit.lookAura = getField<uint16_t>(L, arg, "lookAura");
+	outfit.lookShader = getField<uint16_t>(L, arg, "lookShader");
+	outfit.lookWings = getField<uint16_t>(L, arg, "lookWings");
 
 	outfit.lookFeet = getField<uint8_t>(L, arg, "lookFeet");
 	outfit.lookLegs = getField<uint8_t>(L, arg, "lookLegs");
@@ -951,7 +956,7 @@ void LuaScriptInterface::pushPosition(lua_State* L, const Position& position, in
 
 void LuaScriptInterface::pushOutfit(lua_State* L, const Outfit_t& outfit)
 {
-	lua_createtable(L, 0, 8);
+	lua_createtable(L, 0, 11);
 	setField(L, "lookType", outfit.lookType);
 	setField(L, "lookTypeEx", outfit.lookTypeEx);
 	setField(L, "lookHead", outfit.lookHead);
@@ -959,6 +964,10 @@ void LuaScriptInterface::pushOutfit(lua_State* L, const Outfit_t& outfit)
 	setField(L, "lookLegs", outfit.lookLegs);
 	setField(L, "lookFeet", outfit.lookFeet);
 	setField(L, "lookAddons", outfit.lookAddons);
+	setField(L, "lookMount", outfit.lookMount);
+	setField(L, "lookAura", outfit.lookAura);
+	setField(L, "lookShader", outfit.lookShader);
+	setField(L, "lookWings", outfit.lookWings);
 }
 
 void LuaScriptInterface::pushOutfit(lua_State* L, const Outfit* outfit)
@@ -1870,6 +1879,7 @@ void LuaScriptInterface::registerFunctions()
 
 	registerEnum(RELOAD_TYPE_ALL)
 	registerEnum(RELOAD_TYPE_ACTIONS)
+	registerEnum(RELOAD_TYPE_AURAS)
 	registerEnum(RELOAD_TYPE_CHAT)
 	registerEnum(RELOAD_TYPE_CONFIG)
 	registerEnum(RELOAD_TYPE_CREATURESCRIPTS)
@@ -1883,9 +1893,11 @@ void LuaScriptInterface::registerFunctions()
 	registerEnum(RELOAD_TYPE_QUESTS)
 	registerEnum(RELOAD_TYPE_RAIDS)
 	registerEnum(RELOAD_TYPE_SCRIPTS)
+	registerEnum(RELOAD_TYPE_SHADERS)
 	registerEnum(RELOAD_TYPE_SPELLS)
 	registerEnum(RELOAD_TYPE_TALKACTIONS)
 	registerEnum(RELOAD_TYPE_WEAPONS)
+	registerEnum(RELOAD_TYPE_WINGS)
 
 	registerEnum(ZONE_PROTECTION)
 	registerEnum(ZONE_NOPVP)
@@ -2044,6 +2056,10 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Game", "getAccountStorageValue", LuaScriptInterface::luaGameGetAccountStorageValue);
 	registerMethod("Game", "setAccountStorageValue", LuaScriptInterface::luaGameSetAccountStorageValue);
 	registerMethod("Game", "saveAccountStorageValues", LuaScriptInterface::luaGameSaveAccountStorageValues);
+
+	registerMethod("Game", "getAura", LuaScriptInterface::luaGameGetAura);
+	registerMethod("Game", "getShader", LuaScriptInterface::luaGameGetShader);
+	registerMethod("Game", "getWing", LuaScriptInterface::luaGameGetWing);
 
 	// Variant
 	registerClass("Variant", "", LuaScriptInterface::luaVariantCreate);
@@ -2416,6 +2432,20 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Player", "hasOutfit", LuaScriptInterface::luaPlayerHasOutfit);
 	registerMethod("Player", "canWearOutfit", LuaScriptInterface::luaPlayerCanWearOutfit);
 	registerMethod("Player", "sendOutfitWindow", LuaScriptInterface::luaPlayerSendOutfitWindow);
+
+	registerMethod("Player", "addMount", LuaScriptInterface::luaPlayerAddMount);
+	registerMethod("Player", "removeMount", LuaScriptInterface::luaPlayerRemoveMount);
+	registerMethod("Player", "hasMount", LuaScriptInterface::luaPlayerHasMount);
+
+	registerMethod("Player", "addAura", LuaScriptInterface::luaPlayerAddAura);
+	registerMethod("Player", "removeAura", LuaScriptInterface::luaPlayerRemoveAura);
+	registerMethod("Player", "hasAura", LuaScriptInterface::luaPlayerHasAura);
+	registerMethod("Player", "addShader", LuaScriptInterface::luaPlayerAddShader);
+	registerMethod("Player", "removeShader", LuaScriptInterface::luaPlayerRemoveShader);
+	registerMethod("Player", "hasShader", LuaScriptInterface::luaPlayerHasShader);
+	registerMethod("Player", "addWing", LuaScriptInterface::luaPlayerAddWing);
+	registerMethod("Player", "removeWing", LuaScriptInterface::luaPlayerRemoveWing);
+	registerMethod("Player", "hasWing", LuaScriptInterface::luaPlayerHasWing);
 
 	registerMethod("Player", "getPremiumEndsAt", LuaScriptInterface::luaPlayerGetPremiumEndsAt);
 	registerMethod("Player", "setPremiumEndsAt", LuaScriptInterface::luaPlayerSetPremiumEndsAt);
@@ -4659,6 +4689,59 @@ int LuaScriptInterface::luaGameSaveAccountStorageValues(lua_State* L)
 {
 	// Game.saveAccountStorageValues()
 	lua_pushboolean(L, g_game.saveAccountStorageValues());
+
+	return 1;
+}
+
+int LuaScriptInterface::luaGameGetAura(lua_State* L)
+{
+	// Game.getAura(auraId)
+	Aura* aura = g_game.auras.getAuraByID(getNumber<uint8_t>(L, 1));
+	if (!aura) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	lua_createtable(L, 0, 4);
+	setField(L, "id", aura->id);
+	setField(L, "clientId", aura->clientId);
+	setField(L, "name", aura->name);
+	setField(L, "premium", aura->premium);
+
+	return 1;
+}
+
+int LuaScriptInterface::luaGameGetShader(lua_State* L)
+{
+	// Game.getShader(shaderId)
+	Shader* shader = g_game.shaders.getShaderByID(getNumber<uint8_t>(L, 1));
+	if (!shader) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	lua_createtable(L, 0, 3);
+	setField(L, "id", shader->id);
+	setField(L, "name", shader->name);
+	setField(L, "premium", shader->premium);
+
+	return 1;
+}
+
+int LuaScriptInterface::luaGameGetWing(lua_State* L)
+{
+	// Game.getWing(wingId)
+	Wing* wing = g_game.wings.getWingByID(getNumber<uint8_t>(L, 1));
+	if (!wing) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	lua_createtable(L, 0, 4);
+	setField(L, "id", wing->id);
+	setField(L, "clientId", wing->clientId);
+	setField(L, "name", wing->name);
+	setField(L, "premium", wing->premium);
 
 	return 1;
 }
@@ -9335,6 +9418,202 @@ int LuaScriptInterface::luaPlayerSendOutfitWindow(lua_State* L)
 	return 1;
 }
 
+int LuaScriptInterface::luaPlayerAddMount(lua_State* L) {
+	// player:addMount(mountId or mountName)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	uint8_t mountId;
+	if (isNumber(L, 2)) {
+		mountId = getNumber<uint8_t>(L, 2);
+	} else {
+		Mount* mount = g_game.mounts.getMountByName(getString(L, 2));
+		if (!mount) {
+			lua_pushnil(L);
+			return 1;
+		}
+		mountId = mount->id;
+	}
+	pushBoolean(L, player->tameMount(mountId));
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerRemoveMount(lua_State* L) {
+	// player:removeMount(mountId or mountName)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	uint8_t mountId;
+	if (isNumber(L, 2)) {
+		mountId = getNumber<uint8_t>(L, 2);
+	} else {
+		Mount* mount = g_game.mounts.getMountByName(getString(L, 2));
+		if (!mount) {
+			lua_pushnil(L);
+			return 1;
+		}
+		mountId = mount->id;
+	}
+	pushBoolean(L, player->untameMount(mountId));
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerHasMount(lua_State* L) {
+	// player:hasMount(mountId or mountName)
+	const Player* player = getUserdata<const Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	Mount* mount = nullptr;
+	if (isNumber(L, 2)) {
+		mount = g_game.mounts.getMountByID(getNumber<uint8_t>(L, 2));
+	} else {
+		mount = g_game.mounts.getMountByName(getString(L, 2));
+	}
+
+	if (mount) {
+		pushBoolean(L, player->hasMount(mount));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerAddAura(lua_State* L)
+{
+	// player:addAura(auraId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		pushBoolean(L, player->addAura(getNumber<uint8_t>(L, 2)));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerRemoveAura(lua_State* L)
+{
+	// player:removeAura(auraId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		pushBoolean(L, player->removeAura(getNumber<uint8_t>(L, 2)));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerHasAura(lua_State* L) {
+	// player:hasAura(auraId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	Aura* aura = g_game.auras.getAuraByID(getNumber<uint8_t>(L, 2));
+	if (!aura) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	pushBoolean(L, player->hasAura(aura));
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerAddShader(lua_State* L)
+{
+	// player:addShader(shaderId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		pushBoolean(L, player->addShader(getNumber<uint8_t>(L, 2)));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerRemoveShader(lua_State* L)
+{
+	// player:removeShader(shaderId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		pushBoolean(L, player->removeShader(getNumber<uint8_t>(L, 2)));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerHasShader(lua_State* L) {
+	// player:hasShader(shaderId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	Shader* shader = g_game.shaders.getShaderByID(getNumber<uint8_t>(L, 2));
+	if (!shader) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	std::cout << "luaPlayerHasShader" << (int)player->hasShader(shader) << std::endl;
+	pushBoolean(L, player->hasShader(shader));
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerAddWing(lua_State* L)
+{
+	// player:addWing(wingId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		pushBoolean(L, player->addWing(getNumber<uint8_t>(L, 2)));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerRemoveWing(lua_State* L)
+{
+	// player:removeWing(wingId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (player) {
+		pushBoolean(L, player->removeWing(getNumber<uint8_t>(L, 2)));
+	} else {
+		lua_pushnil(L);
+	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerHasWing(lua_State* L) {
+	// player:hasWing(wingId)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	Wing* wing = g_game.wings.getWingByID(getNumber<uint8_t>(L, 2));
+	if (!wing) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	pushBoolean(L, player->hasWing(wing));
+	return 1;
+}
+
 int LuaScriptInterface::luaPlayerGetPremiumEndsAt(lua_State* L)
 {
 	// player:getPremiumEndsAt()
@@ -12542,11 +12821,15 @@ int LuaScriptInterface::luaConditionSetFormula(lua_State* L)
 int LuaScriptInterface::luaConditionSetOutfit(lua_State* L)
 {
 	// condition:setOutfit(outfit)
-	// condition:setOutfit(lookTypeEx, lookType, lookHead, lookBody, lookLegs, lookFeet[, lookAddons])
+	// condition:setOutfit(lookTypeEx, lookType, lookHead, lookBody, lookLegs, lookFeet[, lookAddons[, lookMount, lookAura, lookShader, lookWings]])
 	Outfit_t outfit;
 	if (isTable(L, 2)) {
 		outfit = getOutfit(L, 2);
 	} else {
+		outfit.lookWings = getNumber<uint16_t>(L, 12, outfit.lookWings);
+		outfit.lookShader = getNumber<uint16_t>(L, 11, outfit.lookShader);
+		outfit.lookAura = getNumber<uint16_t>(L, 10, outfit.lookAura);
+		outfit.lookMount = getNumber<uint16_t>(L, 9, outfit.lookMount);
 		outfit.lookAddons = getNumber<uint8_t>(L, 8, outfit.lookAddons);
 		outfit.lookFeet = getNumber<uint8_t>(L, 7);
 		outfit.lookLegs = getNumber<uint8_t>(L, 6);
